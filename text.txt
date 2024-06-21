@@ -1,0 +1,9 @@
+npm i express mongodb --save
+
+ npm i nodemon --save-dev
+
+
+npm run dev
+
+for start db in docker------------
+sudo start docker mongodb
