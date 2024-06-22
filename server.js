@@ -1,105 +1,28 @@
 const express = require('express');
-const {connectToDb, getDb} = require('./db')
-const {ObjectId} = require("mongodb");
+const mongoose = require('mongoose');
 
+// Import model
+const Movie = require('./models/movie');
 
-const PORT = 3000;
+// Import route
+const movieRoutes = require("./routes/movie-routs");
+
+const PORT = process.env.PORT || 3000;
+const URL = process.env.MONGODB_URI || 'mongodb+srv://romanchykovwebdev:jbMb5rYjzjRtq4FV@muvies.ppp8dzo.mongodb.net/movibox?retryWrites=true&w=majority&appName=muvies';
 
 const app = express();
+app.use(express.json());
+app.use(movieRoutes);
 
-let db;
+console.log('Connecting to MongoDB URL:', URL);  // Добавлено логирование URL
 
-connectToDb((err) => {
-    if (!err) {
+mongoose
+    .connect(URL)
+    .then(() => console.log('Connected to MongoDB'))
+    .catch((err) => console.error('DB connection error:', err));  // Использование console.error для логирования ошибок
 
-        app.listen(PORT, (err) => {
-            err ? console.log(err) : console.log('Server running on port', PORT);
-        })
-        db = getDb();
-    } else {
-        console.log('DB connect err: ', err)
-    }
-})
-// fun error
-const handleError = (res, error) => {
-    res.status(500).json({error})
-}
-
-app.get('/movies', (req, res) => {
-    const movies = [];
-    db
-        .collection('movies')
-        .find()
-        .sort({title: 1})
-        .forEach((item) => movies.push(item))
-        .then(() => {
-            res
-                .status(200)
-                .json(movies)
-        })
-        .catch(() => handleError(res, "Something goes wrong..."));
-})
-
-
-app.get('/movies/:id', (req, res) => {
-
-    if (ObjectId.isValid(req.params.id)) {
-        const movieId = new ObjectId(req.params.id);
-        db
-            .collection('movies')
-            .findOne({_id: movieId})
-            .then((doc) => {
-                res
-                    .status(200)
-                    .json(doc)
-            })
-            .catch(() => handleError(res, "Something goes wrong..."))
-    } else {
-        handleError(res, "Wring id")
-    }
-
-
-})
-
-
-app.delete('/movies/:id', (req, res) => {
-
-    if (ObjectId.isValid(req.params.id)) {
-        const movieId = new ObjectId(req.params.id);
-        db
-            .collection('movies')
-            .deleteOne({_id: movieId})
-            .then((result) => {
-                res
-                    .status(200)
-                    .json(result)
-            })
-            .catch(() => handleError(res, "Something goes wrong..."))
-    } else {
-        handleError(res, "Wring id")
-    }
-
-
-})
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+}).on('error', err => {
+    console.error('Server startup error:', err);
+});
